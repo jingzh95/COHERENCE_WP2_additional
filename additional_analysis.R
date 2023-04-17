@@ -61,10 +61,27 @@ par <- c("AllWaves",
 for ( i in seq_along(par) ){
   for (j in levels(temp17$Age_group)){
 wave_name <- par[i]
-################################################
-## Table 1
-################################################
 
+temp17 <- temp17[temp17$Age_group==j,]
+file_name <- paste0(wave_name,"_",j)
+# put in the dates for waves
+if (i==1|i==5){ # all waves
+  var2<-"2019-02-15"
+  var3<-"2999-06-26"
+}else if (i==2|i==6){ # wave 1
+  var2<-"2020-02-15"
+  var3<-"2020-06-04"
+}else if (i==3|i==7){ # wave 2
+  var2<-"2020-10-14"
+  var3<-"2021-06-05"
+}else if (i==4|i==8){ # wave 3
+  var2<-"2021-06-06"
+  var3<-"2021-12-31"
+}
+   
+   ################
+   ## Table 1
+   ################
 if (wave_name %like% "Death"){
   cases<-cases[def3_start_date>=var2 & def3_start_date<=var3]
   colnames(cases)[1] <-"var100"
@@ -96,22 +113,6 @@ if (wave_name %like% "Death"){
   tb = tb[,"p-value":=NULL]
   tb <- table1(~Age_group+Age_quantile+Gender|Hospitalised, data=pop)
   write.xlsx(tb,paste0(result_path, "tb_",wave_name ,".xlsx"))
-}
-temp17 <- temp17[temp17$Age_group==j,]
-file_name <- paste0(wave_name,"_",j)
-# put in the dates for waves
-if (i==1|i==5){ # all waves
-  var2<-"2019-02-15"
-  var3<-"2999-06-26"
-}else if (i==2|i==6){ # wave 1
-  var2<-"2020-02-15"
-  var3<-"2020-06-04"
-}else if (i==3|i==7){ # wave 2
-  var2<-"2020-10-14"
-  var3<-"2021-06-05"
-}else if (i==4|i==8){ # wave 3
-  var2<-"2021-06-06"
-  var3<-"2021-12-31"
 }
 temp17<-temp17[temp17$var108>=var2 & temp17$var108<=var3,]
 
