@@ -39,7 +39,7 @@ max_age <- max(temp17$age)
                                  "[18, 65)",
                                  "[65, 75)",
                                  paste0("[75,", max_age, ")")))
-
+pop <- temp17
 levels(temp17$Age_group)
 
 par <- c("AllWaves",
@@ -60,9 +60,45 @@ par <- c("AllWaves",
 
 for ( i in seq_along(par) ){
   for (j in levels(temp17$Age_group)){
-file_name <- par[i]
+wave_name <- par[i]
+################################################
+## Table 1
+################################################
+
+if (wave_name %like% "Death"){
+  cases<-cases[def3_start_date>=var2 & def3_start_date<=var3]
+  colnames(cases)[1] <-"var100"
+  temp000 <- cases[,c("var100","case")]
+  temp000 <- unique(temp000)
+  cases1<- merge(pop,temp000,by="var100",all.x=T)
+  table(cases1$var4, cases1$case)
+  cases1$var4 <- ifelse(cases1$var4==1, 
+                        ifelse(cases1$case==1,1,0),0)
+  cases1$var4 <- ifelse(is.na(cases1$var4),0,cases1$var4)
+  df <- as.data.frame(aggregate(cases1$var4, by=list(cases1$var0),FUN=sum))
+  colnames(df) <- c("var0","proxy")
+  cases1<- merge(cases1,df,by="var0",all.x=T)
+  cases1 <- cases1[which(cases1$proxy>0),]
+  pop <- cases1
+  pop$Death <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
+  
+  tb <- data.table(summary(univariateTable(Death~Age_group+Age_quantile+Gender, data=pop)))
+  # remove "p-value"
+  tb = tb[,"p-value":=NULL]
+  
+  tb <- table1(~Age_group+Age_quantile+Gender|Death, data=pop)
+  write.xlsx(tb,paste0(result_path, "tb_",wave_name, ".xlsx"))
+}else{
+  pop$Hospitalised <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
+  
+  tb <- data.table(summary(univariateTable(Hospitalised~Age_group+Age_quantile+Gender, data=pop)))
+  # remove "p-value"
+  tb = tb[,"p-value":=NULL]
+  tb <- table1(~Age_group+Age_quantile+Gender|Hospitalised, data=pop)
+  write.xlsx(tb,paste0(result_path, "tb_",wave_name ,".xlsx"))
+}
 temp17 <- temp17[temp17$Age_group==j,]
-file_name <- paste0(file_name,"_",j)
+file_name <- paste0(wave_name,"_",j)
 # put in the dates for waves
 if (i==1|i==5){ # all waves
   var2<-"2019-02-15"
@@ -78,45 +114,6 @@ if (i==1|i==5){ # all waves
   var3<-"2021-12-31"
 }
 temp17<-temp17[temp17$var108>=var2 & temp17$var108<=var3,]
-
-################################################
-## Table 1
-################################################
-
- if (file_name %like% "Death"){
-   cases<-cases[def3_start_date>=var2 & def3_start_date<=var3]
-   colnames(cases)[1] <-"var100"
-   temp000 <- cases[,c("var100","case")]
-   temp000 <- unique(temp000)
-   cases1<- merge(temp17,temp000,by="var100",all.x=T)
-   table(cases1$var4, cases1$case)
-   cases1$var4 <- ifelse(cases1$var4==1, 
-                         ifelse(cases1$case==1,1,0),0)
-   cases1$var4 <- ifelse(is.na(cases1$var4),0,cases1$var4)
-   df <- as.data.frame(aggregate(cases1$var4, by=list(cases1$var0),FUN=sum))
-   colnames(df) <- c("var0","proxy")
-   cases1<- merge(cases1,df,by="var0",all.x=T)
-   cases1 <- cases1[which(cases1$proxy>0),]
-   pop <- cases1
-   pop$Death <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
-   
-   tb <- data.table(summary(univariateTable(Death~Age_group+Age_quantile+Gender, data=pop)))
-   # remove "p-value"
-   tb = tb[,"p-value":=NULL]
-   
-   tb <- table1(~Age_group+Age_quantile+Gender|Death, data=pop)
-   write.xlsx(tb,paste0(result_path, "tb_", file_name, ".xlsx"))
-  }else{
-   pop<-temp17
-   pop$Hospitalised <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
-   
-   tb <- data.table(summary(univariateTable(Hospitalised~Age_group+Age_quantile+Gender, data=pop)))
-   # remove "p-value"
-   tb = tb[,"p-value":=NULL]
-   tb <- table1(~Age_group+Age_quantile+Gender|Hospitalised, data=pop)
-   write.xlsx(tb,paste0(result_path, "tb_", file_name, ".xlsx"))
-  }
-
 
 ################################################
 ## Module 2
