@@ -30,7 +30,7 @@ atc <- atc[!atc==""]
 ## of birth and date of matching var108
 ################################################
 load ("/tsd/p1380/data/durable/Nordic_CDM/Framework_NCDM/Permanent_datasets/case_control_risk_set_matching_formating.RData") # temp17
-summary(temp17$var108)
+summary(temp17$var108) # If var108 is the date of matching, we use the earliest date
 #  Min.      1st Qu.       Median         Mean      3rd Qu.         Max. 
 # "2020-02-24" "2020-12-14" "2021-04-11" "2021-04-17" "2021-11-08" "2021-12-31" 
 ## we use the min. date to extract the prevalence
