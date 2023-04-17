@@ -10,6 +10,7 @@ country_code <- "NO" # the country code is useless. we change format to integer 
 library(data.table)
 ################################################
 ## extract the diagnostic code and ATC code
+## from the "predictors"
 ################################################
 load ("/tsd/p1380/data/durable/Nordic_CDM/Framework_NCDM/Analysis/Permanent_datasets/tempal.RData")
 
