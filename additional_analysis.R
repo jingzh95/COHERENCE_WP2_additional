@@ -352,11 +352,11 @@ gc()
 ################################################
 # rm(list=ls())
 gc()
-load(paste0(result_path, "Roc_calliper_",
+load(paste0("temp39_",
             file_name,
-            ".xlsx"))
+            ".RData"))
 bmp(file=paste0(result_path, "M6_AUC_", file_name, ".bmp"), 
-    idth=8, height=12,unit="in", res=200)
+    width=8, height=12,unit="in", res=200)
 plot(1:length(temp39) , abs(temp39), 
      type="l",xlab="N. features", ylab = "AUC")
 dev.off()
@@ -374,7 +374,6 @@ for(I in c(3,5,7,9)){
   plotPeaks(df,I)
 }
 
-gc()
 
 ################################################
 ## Module 7
@@ -383,18 +382,19 @@ gc()
 # rm(list=ls())
 gc()
 
-load(paste0("Permanent_datasets/tempall3_",
-            file_name,
-            ".RData"))
-#temp37 <- tempall3
+# load(paste0("Permanent_datasets/tempall3_",
+#             file_name,
+#             ".RData"))
+tempall3 <- temp37
 
 N0<- table(tempall3$var4)
 temp37<- ovun.sample(var4 ~ . ,data=tempall3, method="under", N=N0[2]*2)$data
 
 temp37$var4 <- ifelse(temp37$var4=="0","no","yes")
-var5 <- trainControl(method = "cv",number = 5,classProbs =TRUE, summaryFunction = twoClassSummary )
+var5 <- trainControl(method = "cv", number = 5,
+                     classProbs =TRUE, summaryFunction = twoClassSummary)
 
-class1 <- caret::train(var4 ~ .,data=temp37,trControl=var5, method="glm", metric="ROC")
+class1 <- caret::train(var4 ~ .,data=temp37,trControl=var5, method="glm", metric="ROC") # error starts from here
 class2 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='rf', metric="ROC")
 class3 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='ranger', metric="ROC")
 class4 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='rpart', metric="ROC")
