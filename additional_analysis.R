@@ -400,13 +400,13 @@ var5 <- trainControl(method = "cv", number = 5,
                      classProbs =TRUE, summaryFunction = twoClassSummary)
 
 class1 <- caret::train(var4 ~ .,data=temp37,trControl=var5, method="glm", metric="ROC")
-class2 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='rf', metric="ROC")
+# class2 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='rf', metric="ROC")
 class3 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='ranger', metric="ROC")
 class4 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='rpart', metric="ROC")
 
 
 save(class1,file=paste0("class1_", file_name, ".RData"))
-save(class2,file=paste0("class2_", file_name, ".RData"))
+# save(class2,file=paste0("class2_", file_name, ".RData"))
 save(class3,file=paste0("class3_", file_name, ".RData"))
 save(class4,file=paste0("class4_", file_name, ".RData"))
 
@@ -562,14 +562,14 @@ sink(file=NULL)
 temp38a0<- confusionMatrix(class0)
 
 temp38a1<- confusionMatrix(class1)
-temp38a2 <- confusionMatrix(class2)
+#temp38a2 <- confusionMatrix(class2)
 temp38a3 <- confusionMatrix(class3)
 temp38a4 <- confusionMatrix(class4)
 
 
 var38a0 <- sum(diag(temp38a0$table))/100
 var38a1 <- sum(diag(temp38a1$table))/100
-var38a2 <- sum(diag(temp38a2$table))/100
+#var38a2 <- sum(diag(temp38a2$table))/100
 var38a3 <- sum(diag(temp38a3$table))/100
 var38a4 <- sum(diag(temp38a4$table))/100
 
