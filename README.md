@@ -2,7 +2,7 @@
 
 The numerator of the "prevalence" follows the original definition - including old and new patients/users;
 
-The age is defined with respect to 2021;
+The age is defined at the time of matching;
 
 National stats of drug: https://www.norpd.no/Prevalens.aspx 
 
