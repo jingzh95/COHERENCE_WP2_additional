@@ -231,7 +231,7 @@ save(tempall2,file=paste0("Permanent_datasets/tempall2_",
 
 ###extra features input 
 
-temp36a <- temp35[1:(var35e+2),]
+temp36a <- temp35[1:(var35e),] # Jing: removed +2 after var35e
 
 tempall2a=cbind(tempall1[,c(temp36a$var3)],var4=tempall1$var4)
 save(tempall2a,file=paste0("Permanent_datasets/tempall2a_",
