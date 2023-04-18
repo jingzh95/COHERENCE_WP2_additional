@@ -1,7 +1,7 @@
 #############################################################################################
 ## NO: replace /tsd/p1380/data with /tsd/p1380/data for runing on linux vm anddd add "_L" to module0
 ## the "_L in line 17 is just for me to install packages for Linux, if you run on windows, remove it."
-
+## Authors: Saeed Shakibfar & Maurizio Sessa
 ################################################
 ## path and packages
 ################################################
@@ -252,7 +252,7 @@ load(paste0("Permanent_datasets/tempall2a_",
             ".RData")) 
 
 temp37<-tempall2a
-temp37$var4 <- ifelse(temp37$var4=="0","no","yes")
+temp37$var4 <- ifelse(temp37$var4==0,"no","yes")
 var5 <- trainControl(method = "cv", number = 5,
                      classProbs =TRUE, 
                      summaryFunction = twoClassSummary)
