@@ -5,11 +5,11 @@
 ################################################
 ## path and packages
 ################################################
-setwd("/tsd/p1380/data/durable/Nordic_CDM/Framework_NCDM/Analysis")
-result_path <- "/tsd/p1380/data/durable/Nordic_CDM/Framework_NCDM/Results/"
+setwd("N:/durable/Nordic_CDM/Framework_NCDM/Analysis")
+result_path <- "N:/durable/Nordic_CDM/Framework_NCDM/Results/"
 
-source("/tsd/p1380/data/durable/Nordic_CDM/Framework_NCDM/Modules/Module0_L.R") # the "_L just for me to install packages for Linux, if you run on windows, remove it."
-source("/tsd/p1380/data/durable/Nordic_CDM/Framework_NCDM/Analysis/Modules/Module0_L.R") # same as above
+source("N:/durable/Nordic_CDM/Framework_NCDM/Modules/Module0.R") # the "_L just for me to install packages for Linux, if you run on windows, remove it."
+source("N:/durable/Nordic_CDM/Framework_NCDM/Analysis/Modules/Module0.R") # same as above
 
 ################################################
 ## data management
@@ -20,17 +20,19 @@ load ("../Permanent_datasets/case_control_risk_set_matching_formating.RData") # 
 
 
 # define death cases
-cases_register<- read_sas("/tsd/p1380/data/durable/Nordic_CDM/wp2_cdm/cases.sas7bdat", NULL) 
+cases_register<- read_sas("N:/durable/Nordic_CDM/wp2_cdm/cases.sas7bdat", NULL) 
 cases <- cases_register[which(cases_register$def3==3),]
 
 
-# age_quantile & age_group
+# age_quantile (removed)& age_group
 temp17 <- temp17[!duplicated(temp17$var100),]
-temp17$age <- 2021-year(temp17$var102)
+temp17$age <- as.numeric(round((temp17$var108-temp17$var102)/365,0))
+temp17$age[temp17$age<0] <- 0
+temp <- temp17[temp17$age<18,]
 max_age <- max(temp17$age)
 
  # discretize age with cluster 
- temp17$Age_quantile <- discretize(temp17$age, method = "cluster", breaks=4)
+ # temp17$Age_quantile <- discretize(temp17$age, method = "cluster", breaks=4)
  temp17$Gender <- factor(temp17$var103, labels=c("M", "F"))
 
  # define age group from comments
@@ -61,8 +63,7 @@ par <- c("AllWaves",
 for ( i in seq_along(par) ){
   for (j in levels(temp17$Age_group)){
 wave_name <- par[i]
-
-temp17 <- temp17[temp17$Age_group==j,]
+temp17 <- temp17[temp17$Age_group==j,] #   0 1901   1   397 
 file_name <- paste0(wave_name,"_",j)
 # put in the dates for waves
 if (i==1|i==5){ # all waves
@@ -78,10 +79,11 @@ if (i==1|i==5){ # all waves
   var2<-"2021-06-06"
   var3<-"2021-12-31"
 }
-   
-   ################
-   ## Table 1
-   ################
+
+################################################
+## Table 1
+################################################
+
 if (wave_name %like% "Death"){
   cases<-cases[def3_start_date>=var2 & def3_start_date<=var3]
   colnames(cases)[1] <-"var100"
@@ -99,32 +101,37 @@ if (wave_name %like% "Death"){
   pop <- cases1
   pop$Death <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
   
-  tb <- data.table(summary(univariateTable(Death~Age_group+Age_quantile+Gender, data=pop)))
+  tb <- data.table(summary(univariateTable(Death~Age_group+Gender, data=pop))) # Age_quantile+
   # remove "p-value"
   tb = tb[,"p-value":=NULL]
   
-  tb <- table1(~Age_group+Age_quantile+Gender|Death, data=pop)
+  # tb <- table1(~Age_group+Gender|Death, data=pop) # Age_quantile+
   write.xlsx(tb,paste0(result_path, "tb_",wave_name, ".xlsx"))
 }else{
   pop$Hospitalised <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
   
-  tb <- data.table(summary(univariateTable(Hospitalised~Age_group+Age_quantile+Gender, data=pop)))
+  tb <- data.table(summary(univariateTable(Hospitalised~Age_group+Gender, data=pop))) # Age_quantile+
   # remove "p-value"
   tb = tb[,"p-value":=NULL]
-  tb <- table1(~Age_group+Age_quantile+Gender|Hospitalised, data=pop)
+  # tb <- table1(~Age_group+Gender|Hospitalised, data=pop) # Age_quantile+
   write.xlsx(tb,paste0(result_path, "tb_",wave_name ,".xlsx"))
 }
+
 temp17<-temp17[temp17$var108>=var2 & temp17$var108<=var3,]
+
+# 0    1 
+# 1901  397 
+
 
 ################################################
 ## Module 2
 ################################################
 tempal<-tempal%>%
-  full_join(temp17[c("var100","var4")], by=c("var100"))
+  full_join(temp17[c("var100","var4")], by=c("var100")) # same var4 distr
 
-tempall <- tempal[,-ncol(tempal)]
-var4 <- tempal[,ncol(tempal)]
-tempall <- tempall[,-1]
+tempall <- tempal[,-ncol(tempal)] # remove var4 outcome
+var4 <- tempal[,ncol(tempal)] # same distr
+tempall <- tempall[,-1] # remove id var100
 
 tempall <- mutate_all(tempall, ~replace(.,is.na(.),0))
 
@@ -147,9 +154,9 @@ save(tempall1,file=paste0("Permanent_datasets/tempall1_",
 
 # rm(list=ls())
 gc()
-load (paste0("Permanent_datasets/tempall1_", 
-             file_name, 
-             ".RData"))
+# load (paste0("Permanent_datasets/tempall1_", 
+#              file_name, 
+#              ".RData"))
 
 temp40 <- ensemble_fs(data =  tempall1,
                       classnumber = length(tempall1), 
@@ -169,12 +176,12 @@ gc()
 
 var30<-"U07"
 
-load(paste0("Permanent_datasets/tempall1_", 
-            file_name, 
-            ".RData"))
-load(paste0("Permanent_datasets/temp40_", 
-            file_name, 
-            ".RData"))
+# load(paste0("Permanent_datasets/tempall1_", 
+#             file_name, 
+#             ".RData"))
+# load(paste0("Permanent_datasets/temp40_", 
+#             file_name, 
+#             ".RData"))
 
 temp35 <- as.data.frame(t(temp40))
 temp35$var35b <- temp35$Median+temp35$P_cor+temp35$S_cor+temp35$LogReg+temp35$ER_RF+temp35$Gini_RF
@@ -243,16 +250,16 @@ gc()
 ## Optimal feature Selection based on ROC
 ################################################
 # rm(list=ls())
-gc()
-load(paste0("Permanent_datasets/tempall2_",
-            file_name,
-            ".RData")) 
-load(paste0("Permanent_datasets/tempall2a_",
-            file_name,
-            ".RData")) 
+# gc()
+# load(paste0("Permanent_datasets/tempall2_",
+#             file_name,
+#             ".RData")) 
+# load(paste0("Permanent_datasets/tempall2a_",
+#             file_name,
+#             ".RData")) 
 
 temp37<-tempall2a
-temp37$var4 <- ifelse(temp37$var4==0,"no","yes")
+temp37$var4 <- ifelse(temp37$var4==0,"no","yes") #   no 47464  yes 397, remove "" from "0"
 var5 <- trainControl(method = "cv", number = 5,
                      classProbs =TRUE, 
                      summaryFunction = twoClassSummary)
@@ -350,9 +357,9 @@ gc()
 ################################################
 # rm(list=ls())
 gc()
-load(paste0("temp39_",
-            file_name,
-            ".RData"))
+# load(paste0("temp39_",
+#             file_name,
+#             ".RData"))
 bmp(file=paste0(result_path, "M6_AUC_", file_name, ".bmp"), 
     width=8, height=12,unit="in", res=200)
 plot(1:length(temp39) , abs(temp39), 
@@ -392,7 +399,7 @@ temp37$var4 <- ifelse(temp37$var4=="0","no","yes")
 var5 <- trainControl(method = "cv", number = 5,
                      classProbs =TRUE, summaryFunction = twoClassSummary)
 
-class1 <- caret::train(var4 ~ .,data=temp37,trControl=var5, method="glm", metric="ROC") # error starts from here
+class1 <- caret::train(var4 ~ .,data=temp37,trControl=var5, method="glm", metric="ROC")
 class2 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='rf', metric="ROC")
 class3 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='ranger', metric="ROC")
 class4 <- caret::train(var4 ~ ., data=temp37,trControl=var5, method='rpart', metric="ROC")
@@ -411,12 +418,12 @@ save(class4,file=paste0("class4_", file_name, ".RData"))
 gc()
 
 var30<-"U07"
-load(paste0("Permanent_datasets/temp40_", 
-            file_name, 
-            ".RData"))
-load(paste0("Permanent_datasets/tempall3_",
-            file_name,
-            ".RData"))
+# load(paste0("Permanent_datasets/temp40_", 
+#             file_name, 
+#             ".RData"))
+# load(paste0("Permanent_datasets/tempall3_",
+#             file_name,
+#             ".RData"))
 temp35 <- as.data.frame(t(temp40))# scores
 # ensembled scores
 temp35$var8 <- temp35$Median+temp35$P_cor+temp35$S_cor+temp35$LogReg+temp35$ER_RF+temp35$Gini_RF
@@ -534,11 +541,11 @@ write.xlsx(temp35,paste0(result_path, "Output_all_predictors_", file_name, "xlsx
 # rm(list=ls())
 gc()
 
-load(paste0("class0_", file_name, ".RData"))
-load(paste0("class1_", file_name, ".RData"))
-load(paste0("class2_", file_name, ".RData"))
-load(paste0("class3_", file_name, ".RData"))
-load(paste0("class4_", file_name, ".RData"))
+# load(paste0("class0_", file_name, ".RData"))
+# load(paste0("class1_", file_name, ".RData"))
+# load(paste0("class2_", file_name, ".RData"))
+# load(paste0("class3_", file_name, ".RData"))
+# load(paste0("class4_", file_name, ".RData"))
 
 temp38 <- resamples(list(LR=class1,RFranger=class3,RP= class4,DRS=class0))  #RF=class2,
 
