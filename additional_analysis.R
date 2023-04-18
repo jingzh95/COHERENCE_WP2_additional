@@ -488,7 +488,7 @@ write.xlsx(tempall4[,c("var13", "var11")],paste0(result_path, "Risk_score_",
 N0<- table(tempall3$var4)
 temp37<- ovun.sample(var4 ~ . ,data=tempall3, method="under", N=N0[2]*2)$data
 
-temp37$var4 <- ifelse(temp37$var4=="0","no","yes")
+# temp37$var4 <- ifelse(temp37$var4==0,"no","yes")
 var5 <- trainControl(method = "cv",number = 5,classProbs =TRUE, summaryFunction = twoClassSummary )
 class0 <- caret::train(var4 ~ var11,data=temp37,trControl=var5, method="glm", metric="ROC")
 
