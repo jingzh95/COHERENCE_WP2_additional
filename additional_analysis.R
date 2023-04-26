@@ -17,7 +17,7 @@ source("/tsd/p1380/data/durable/Nordic_CDM/Framework_NCDM/Analysis/Modules/Modul
 # get all pop and all predictors & outcomes
 load ("Permanent_datasets/tempal.RData")
 load ("../Permanent_datasets/case_control_risk_set_matching_formating.RData") # temp17
-
+tempal0 <- tempal
 
 # format dates
 ref_date <- as.Date("1901-05-02")
@@ -25,7 +25,7 @@ cases_register<- read_sas("/tsd/p1380/data/durable/Nordic_CDM/wp2_cdm/cases.sas7
 cases_register$def3_start_date <- ref_date + cases_register$def3_start_date
 cases_register$def1_start_date <- ref_date + cases_register$def1_start_date
 cases_register$def2_start_date <- ref_date + cases_register$def2_start_date
-
+save(cases_register, file="Permanent_datasets/cases_register.RData")
 
 # age_quantile (removed)& age_group
 temp17 <- temp17[!duplicated(temp17$var100),]
@@ -65,13 +65,15 @@ par <- c("AllWaves",
 ################################################
 
 
-for ( i in seq_along(par) ){
+for ( i in  seq_along(par)){ # 5:8 for rerun Death part earlier
   wave_name <- par[i]
   load ("Permanent_datasets/temp17.RData")
   pop <- temp17
   for (j in levels(temp17$Age_group)){
     for (k in levels(temp17$Gender)){
       load ("Permanent_datasets/temp17.RData")
+      load("Permanent_datasets/cases_register.RData")
+      pop <- temp17
     temp17 <- temp17[temp17$Age_group==j & temp17$Gender==k,] #   0 1901   1   397 
     file_name <- paste0(wave_name,"_",j,"_",k)
   
@@ -95,35 +97,36 @@ if (i==1|i==5){ # all waves
 ################################################
 
 if (wave_name %like% "Death"){
-  
-  # subset death
-  cases <- cases_register[which(cases_register$def3==3),]
-  cases<-cases[cases$def3_start_date>=var2 & 
-                 cases$def3_start_date<=var3,]
-  setnames(cases, "person_id", "var100", skip_absent=TRUE)
-  temp000 <- cases[,c("var100","case")]
-  temp000 <- unique(temp000)
-  cases1<- merge(pop,temp000,by="var100",all.x=T)
-  # Jing: assign 1 to NA for case
-  cases1$case <- ifelse(is.na(cases1$case), 0, cases1$case) 
-  table(cases1$var4, cases1$case)
-  cases1$var4 <- ifelse(cases1$var4==1, 
-                        ifelse(cases1$case==1,1,0),0)
-  cases1$var4 <- ifelse(is.na(cases1$var4),0,cases1$var4)
-  df <- as.data.frame(aggregate(cases1$var4, by=list(cases1$var0),FUN=sum))
-  colnames(df) <- c("var0","proxy")
-  cases1<- merge(cases1,df,by="var0",all.x=T)
-  cases1 <- cases1[which(cases1$proxy>0),]
-  pop <- cases1
-  pop$Death <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
-  
-  tb <- data.table(summary(univariateTable(Death~Age_group+Gender, data=pop))) # Age_quantile+
-  # remove "p-value"
-  tb = tb[,"p-value":=NULL]
-  
-  # tb <- table1(~Age_group+Gender|Death, data=pop) # Age_quantile+
-  write.xlsx(tb,paste0(result_path, "tb_",wave_name, ".xlsx"))
-}else{
+  if (k=="M"){ # only produce tb1 once for each (sub-)wave
+    # subset death
+    cases <- cases_register[which(cases_register$def3==3),]
+    cases<-cases[cases$def3_start_date>=var2 & 
+                   cases$def3_start_date<=var3,]
+    setnames(cases, "person_id", "var100", skip_absent=TRUE)
+    temp000 <- cases[,c("var100","case")]
+    temp000 <- unique(temp000)
+    cases1<- merge(pop,temp000,by="var100",all.x=T)
+    # Jing: assign 1 to NA for case
+    cases1$case <- ifelse(is.na(cases1$case), 0, cases1$case) 
+    table(cases1$var4, cases1$case)
+    cases1$var4 <- ifelse(cases1$var4==1, 
+                          ifelse(cases1$case==1,1,0),0)
+    cases1$var4 <- ifelse(is.na(cases1$var4),0,cases1$var4)
+    df <- as.data.frame(aggregate(cases1$var4, by=list(cases1$var0),FUN=sum))
+    colnames(df) <- c("var0","proxy")
+    cases1<- merge(cases1,df,by="var0",all.x=T)
+    cases1 <- cases1[which(cases1$proxy>0),]
+    pop <- cases1
+    pop$Death <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
+    
+    tb <- data.table(summary(univariateTable(Death~Age_group+Gender, data=pop))) # Age_quantile+
+    # remove "p-value"
+    tb = tb[,"p-value":=NULL]
+    
+    # tb <- table1(~Age_group+Gender|Death, data=pop) # Age_quantile+
+    write.xlsx(tb,paste0(result_path, "tb_",wave_name, ".xlsx"))
+  }
+  }else{
   pop$Hospitalised <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
   
   tb <- data.table(summary(univariateTable(Hospitalised~Age_group+Gender, data=pop))) # Age_quantile+
@@ -142,11 +145,11 @@ temp17<-temp17[temp17$var108>=var2 & temp17$var108<=var3,]
 ################################################
 ## Module 2
 ################################################
-tempal<-tempal%>%
+tempal0<-tempal%>%
   full_join(temp17[c("var100","var4")], by=c("var100")) # same var4 distr
 
-tempall <- tempal[,-ncol(tempal)] # remove var4 outcome
-var4 <- tempal[,ncol(tempal)] # same distr
+tempall <- tempal0[,-ncol(tempal0)] # remove var4 outcome
+var4 <- tempal0[,ncol(tempal0)] # same distr
 tempall <- tempall[,-1] # remove id var100
 
 tempall <- mutate_all(tempall, ~replace(.,is.na(.),0))
@@ -606,4 +609,5 @@ write.xlsx(temp38b, paste0(result_path, "confusionMatrix_results_", file_name, "
   } # end of Gender
  } # end of Age_group
 } # end of waves death
+
 
