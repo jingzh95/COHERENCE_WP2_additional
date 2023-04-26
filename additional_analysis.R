@@ -130,8 +130,8 @@ if (wave_name %like% "Death"){
     write.xlsx(tb,paste0(result_path, "tb_",wave_name, ".xlsx"))
   }
   }else{
+  pop<-pop[pop$var108>=var2 & pop$var108<=var3,]
   pop$Hospitalised <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
-  
   tb <- data.table(summary(univariateTable(Hospitalised~Age_group+Gender, data=pop))) # Age_quantile+
   # remove "p-value"
   tb = tb[,"p-value":=NULL]
