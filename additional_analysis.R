@@ -22,9 +22,12 @@ tempal0 <- tempal
 # format dates
 ref_date <- as.Date("1901-05-02")
 cases_register<- read_sas("/tsd/p1380/data/durable/Nordic_CDM/wp2_cdm/cases.sas7bdat", NULL) 
+###################################################################################
+# only for running with NO data
 cases_register$def3_start_date <- ref_date + cases_register$def3_start_date
 cases_register$def1_start_date <- ref_date + cases_register$def1_start_date
 cases_register$def2_start_date <- ref_date + cases_register$def2_start_date
+###################################################################################
 save(cases_register, file="Permanent_datasets/cases_register.RData")
 
 # age_quantile (removed)& age_group
