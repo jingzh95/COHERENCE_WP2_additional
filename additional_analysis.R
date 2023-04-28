@@ -22,12 +22,9 @@ tempal0 <- tempal
 # format dates
 ref_date <- as.Date("1901-05-02")
 cases_register<- read_sas("/tsd/p1380/data/durable/Nordic_CDM/wp2_cdm/cases.sas7bdat", NULL) 
-###################################################################################
-# only for running with NO data
 cases_register$def3_start_date <- ref_date + cases_register$def3_start_date
 cases_register$def1_start_date <- ref_date + cases_register$def1_start_date
 cases_register$def2_start_date <- ref_date + cases_register$def2_start_date
-###################################################################################
 save(cases_register, file="Permanent_datasets/cases_register.RData")
 
 # age_quantile (removed)& age_group
@@ -62,24 +59,24 @@ par <- c("AllWaves",
          "DeathWave3")
 
 
-
+i=1;j="[18, 65)";k="M"
 ################################################
 ## waves, death
 ################################################
 
 
-for ( i in  seq_along(par)){ # 5:8 for rerun Death part earlier
+for ( i in  seq_along(par)){ #
   wave_name <- par[i]
   load ("Permanent_datasets/temp17.RData")
   pop <- temp17
-  for (j in levels(temp17$Age_group)){
+ for (j in levels(temp17$Age_group)){
     for (k in levels(temp17$Gender)){
       load ("Permanent_datasets/temp17.RData")
       load("Permanent_datasets/cases_register.RData")
       pop <- temp17
-    temp17 <- temp17[temp17$Age_group==j & temp17$Gender==k,] #   0 1901   1   397 
+    temp17 <- temp17[temp17$Age_group==j & temp17$Gender==k,] #   0 1901   1   397
     file_name <- paste0(wave_name,"_",j,"_",k)
-  
+
 # put in the dates for waves
 if (i==1|i==5){ # all waves
   var2<-"2019-02-15"
@@ -100,7 +97,7 @@ if (i==1|i==5){ # all waves
 ################################################
 
 if (wave_name %like% "Death"){
-  if (k=="M"){ # only produce tb1 once for each (sub-)wave
+  if (k=="M"){
     # subset death
     cases <- cases_register[which(cases_register$def3==3),]
     cases<-cases[cases$def3_start_date>=var2 & 
@@ -130,8 +127,10 @@ if (wave_name %like% "Death"){
     write.xlsx(tb,paste0(result_path, "tb_",wave_name, ".xlsx"))
   }
   }else{
-  pop<-pop[pop$var108>=var2 & pop$var108<=var3,]
+    
+    pop <- pop[pop$var108>=var2 & pop$var108<=var3,]
   pop$Hospitalised <- factor(pop$var4, labels=c("No", "Yes")) # Hospitalised
+  
   tb <- data.table(summary(univariateTable(Hospitalised~Age_group+Gender, data=pop))) # Age_quantile+
   # remove "p-value"
   tb = tb[,"p-value":=NULL]
@@ -141,15 +140,15 @@ if (wave_name %like% "Death"){
 
 temp17<-temp17[temp17$var108>=var2 & temp17$var108<=var3,]
 
-# 0   1 
-# 945 196 
+# 0   1
+# 945 196
 
 
 ################################################
 ## Module 2
 ################################################
 tempal0<-tempal%>%
-  full_join(temp17[c("var100","var4")], by=c("var100")) # same var4 distr
+  right_join(temp17[c("var100","var4")], by=c("var100")) # same var4 distr
 
 tempall <- tempal0[,-ncol(tempal0)] # remove var4 outcome
 var4 <- tempal0[,ncol(tempal0)] # same distr
@@ -160,14 +159,14 @@ tempall <- mutate_all(tempall, ~replace(.,is.na(.),0))
 tempall <-tempall[,colSums(tempall !=0)> 0]
 tempall <- tempall[sapply(tempall, is.numeric)]
 var20 <- apply(tempall, 2,var) # Jing: var2 changed to var20
-temp34<-as.data.frame(var20[which(var20>0.001)]) 
+temp34<-as.data.frame(var20[which(var20>0.001)])
 temp34$var30 <- rownames(temp34) # Jing: var3 changed to var30
 tempall<- tempall[,temp34$var30]
 tempall1<-cbind(tempall,var4)
 tempall1 <- mutate_all(tempall1, ~replace(.,is.na(.),0))
 
-save(tempall1,file=paste0("Permanent_datasets/tempall1_", 
-                          file_name, 
+save(tempall1,file=paste0("Permanent_datasets/tempall1_",
+                          file_name,
                           ".RData"))
 
 ################################################
@@ -176,17 +175,17 @@ save(tempall1,file=paste0("Permanent_datasets/tempall1_",
 
 # rm(list=ls())
 gc()
-# load (paste0("Permanent_datasets/tempall1_", 
-#              file_name, 
+# load (paste0("Permanent_datasets/tempall1_",
+#              file_name,
 #              ".RData"))
 
 temp40 <- ensemble_fs(data =  tempall1,
-                      classnumber = length(tempall1), 
-                      runs = 1, 
-                      selection = c(TRUE, TRUE, TRUE, TRUE, 
+                      classnumber = length(tempall1),
+                      runs = 1,
+                      selection = c(TRUE, TRUE, TRUE, TRUE,
                                     FALSE, FALSE, FALSE,FALSE))
-save(temp40,file=paste0("Permanent_datasets/temp40_", 
-                          file_name, 
+save(temp40,file=paste0("Permanent_datasets/temp40_",
+                          file_name,
                           ".RData"))
 
 ################################################
@@ -198,11 +197,11 @@ gc()
 
 var301<-"U07" # change from var30 to var301
 
-# load(paste0("Permanent_datasets/tempall1_", 
-#             file_name, 
+# load(paste0("Permanent_datasets/tempall1_",
+#             file_name,
 #             ".RData"))
-# load(paste0("Permanent_datasets/temp40_", 
-#             file_name, 
+# load(paste0("Permanent_datasets/temp40_",
+#             file_name,
 #             ".RData"))
 
 temp35 <- as.data.frame(t(temp40))
@@ -210,9 +209,9 @@ temp35$var35b <- temp35$Median+temp35$P_cor+temp35$S_cor+temp35$LogReg+temp35$ER
 temp35 <- arrange(temp35,-var35b)
 
 #temp35 <- temp35[3:nrow(temp35),] #to be removed
-temp35$var30 <- rownames(temp35) 
+temp35$var30 <- rownames(temp35)
 
-temp35 <- temp35 %>% 
+temp35 <- temp35 %>%
   filter(!str_detect(var30, var301))
 
 temp35b <- as.data.frame(temp35$var35b)
@@ -233,7 +232,7 @@ temp36 <- temp35[1:var35e,]
 
 bmp(file=paste0(result_path, "Bar_ensemble_score_",
                 file_name,
-                ".bmp"), 
+                ".bmp"),
     width=8, height=12,unit="in", res=200)
 
 plot(barchart(reorder(rownames(temp36), var35b)~temp36$var35b, xlim=c(0,1), data=temp36, horiz=T,
@@ -241,8 +240,8 @@ plot(barchart(reorder(rownames(temp36), var35b)~temp36$var35b, xlim=c(0,1), data
 
 dev.off()
 
-write.xlsx(temp35,paste0(result_path,"ensemble_score_all_", 
-                         file_name, 
+write.xlsx(temp35,paste0(result_path,"ensemble_score_all_",
+                         file_name,
                          ".xlsx" ))
 
 
@@ -404,7 +403,7 @@ par(mfrow=c(2,2))
 for(n in c(3,5,7,9)){
   plotPeaks(df,n)
 }
-
+dev.off()
 
 ################################################
 ## Module 7
@@ -501,7 +500,6 @@ bmp(file=paste0(result_path, "Risk_score_",
                 ".bmp"),
     width=8, height=12,unit="in", res=200)
 plot(tempall4$var11, tempall4$var13, xlab="Risk score", ylab="Odds")
-
 dev.off()
 
 write.xlsx(tempall4[,c("var13", "var11")],paste0(result_path, "Risk_score_",
@@ -526,11 +524,21 @@ class0_sum <- summary(class0)
 sink(file=paste0(result_path, "class0_summary", file_name, ".txt"))
 print(class0_sum)
 sink(file=NULL)
-
+#write.xlsx(class0_sum, paste0(result_path, "class0_summary", file_name, ".xlsx")) # Newly added
 
 probabities <- class0 %>% predict(temp37, type="prob")
 temp37$var14 <- probabities$yes
-
+tempnow1 <- tempnow
+prob <- function(x){1/(1+exp(-x))}
+tempnow1$Probability <- prob(class0_sum$coefficients[1,1] + # b0
+  class0_sum$coefficients[2,1]*as.numeric(tempnow1$Ensamble)) # b1*drs
+tempnow1$upper <- prob((class0_sum$coefficients[1,1]+1.96*class0_sum$coefficients[1,2]) + # b0
+                        (class0_sum$coefficients[2,1]+1.96*class0_sum$coefficients[2,2])*as.numeric(tempnow1$Ensamble))
+tempnow1$lower <- prob((class0_sum$coefficients[1,1]-1.96*class0_sum$coefficients[1,2]) + # b0
+                         (class0_sum$coefficients[2,1]-1.96*class0_sum$coefficients[2,2])*as.numeric(tempnow1$Ensamble))
+write.xlsx(tempnow1, paste0(result_path, "Output_disease_risk_score_weights_prob_ul",
+                           file_name,
+                           ".xlsx" ))
 bmp(file=paste0(result_path, "calibration_", file_name, ".bmp"), width=10, height=12,unit="in", res=200)
 tempall5<- temp37 %>%
   ggplot(aes(var11,var14)) + geom_point(alpha=0.2) +
@@ -540,9 +548,6 @@ tempall5<- temp37 %>%
 
 tempall5
 dev.off()
-
-
-
 round(tapply(temp37$var14, temp37$var11, FUN=median)*100,0)
 
 write.xlsx(temp37[,c("var4","var11","var14")], paste0(result_path, "Calibration_", file_name,".xlsx"))
@@ -610,7 +615,5 @@ var38d <- as.character(temp38b[which.max(temp38b$var38c),]$var38b)
 write.xlsx(temp38b, paste0(result_path, "confusionMatrix_results_", file_name, ".xlsx" ))
 
   } # end of Gender
- } # end of Age_group
+} # end of Age_group
 } # end of waves death
-
-
