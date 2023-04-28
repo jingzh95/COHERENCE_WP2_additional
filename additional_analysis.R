@@ -142,8 +142,8 @@ temp17<-temp17[temp17$var108>=var2 & temp17$var108<=var3,]
 
 # 0   1
 # 945 196
-
-
+# run analysis ONLY if sample size is >=500
+if (nrow(temp17)>=500){
 ################################################
 ## Module 2
 ################################################
@@ -614,6 +614,7 @@ var38d <- as.character(temp38b[which.max(temp38b$var38c),]$var38b)
 
 write.xlsx(temp38b, paste0(result_path, "confusionMatrix_results_", file_name, ".xlsx" ))
 
-  } # end of Gender
-} # end of Age_group
-} # end of waves death
+  } 
+} 
+}
+}
