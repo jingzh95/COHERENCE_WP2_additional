@@ -59,23 +59,23 @@ par <- c("AllWaves",
          "DeathWave3")
 
 
-i=1;j="[18, 65)";k="M"
+# i=1;j="[18, 65)";k="M" for checking if Male has O code
 ################################################
 ## waves, death
 ################################################
 
 
-for ( i in  seq_along(par)){ #
+for ( i in  seq_along(par)){                                     #### replace with c(1,5) for "all" 
   wave_name <- par[i]
-  load ("Permanent_datasets/temp17.RData")
-  pop <- temp17
- for (j in levels(temp17$Age_group)){
-    for (k in levels(temp17$Gender)){
+  load ("Permanent_datasets/temp17.RData")                       #### comment away for "all"
+  pop <- temp17                                                  #### comment away for "all"
+ for (j in levels(temp17$Age_group)){                            #### comment away for "all"
+    for (k in levels(temp17$Gender)){                            #### comment away for "all"
       load ("Permanent_datasets/temp17.RData")
       load("Permanent_datasets/cases_register.RData")
       pop <- temp17
-    temp17 <- temp17[temp17$Age_group==j & temp17$Gender==k,] #   0 1901   1   397
-    file_name <- paste0(wave_name,"_",j,"_",k)
+    temp17 <- temp17[temp17$Age_group==j & temp17$Gender==k,]    #### comment away for "all"
+    file_name <- paste0(wave_name,"_",j,"_",k)                   #### change to file_name <- wave_name
 
 # put in the dates for waves
 if (i==1|i==5){ # all waves
@@ -348,8 +348,6 @@ if (!sum(output=="")==length(output)){
 }else{indices <- length(output)}
 
 # plotting
-
-
 x=1:length(temp39)
 y=temp39
 
@@ -614,7 +612,7 @@ var38d <- as.character(temp38b[which.max(temp38b$var38c),]$var38b)
 
 write.xlsx(temp38b, paste0(result_path, "confusionMatrix_results_", file_name, ".xlsx" ))
 
-  } 
+  }                                                    
 } 
-}
-}
+}                                                                #### comment away for "all"
+}                                                                #### comment away for "all"
