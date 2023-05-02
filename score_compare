@@ -215,7 +215,7 @@ scatter3D(x, y, z,
 text3D(x, y, z,  labels = dt_prev$pred,  
        add = TRUE, colkey = FALSE, cex = 0.5, CI = CI)
 
-# alternative CI in 3D with better axis
+# probability on prevalence and weight in 3D with better axis
 library(plotly)
 fig <- plot_ly(dt_prev, x=~prevalence, y=~Weights, z=~Probability,
                type="scatter3d", mode="markers", color = ~prevalence, 
