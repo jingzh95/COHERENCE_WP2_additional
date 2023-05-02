@@ -1,0 +1,230 @@
+# chnage the link to the "Results"
+# channge this and that for the packages
+# add the "prevalence.csv" to "Results"
+
+# setwd("/tsd/p1380/data/durable/Nordic_CDM/Framework_NCDM/Results/") 
+setwd("C:/Users/jinzh/OneDrive - Universitetet i Oslo/Documents/WP2-ML/risk_score/Additional Work/new_code/Results")
+# TSD_install_path <- "/ess/p1380/data/durable/vac4eu/R_v4.2_packages_linux/"
+# library(data.table, lib.loc = TSD_install_path)
+# library(openxlsx, lib.loc = TSD_install_path)
+# library(stringr, lib.loc = TSD_install_path)
+# library(ggplot2, lib.loc = TSD_install_path)
+# library(readr, lib.loc = TSD_install_path)
+# library(vroom, lib.loc = TSD_install_path )
+#### library(plot3D, lib.loc = TSD_install_path )
+
+library(data.table)
+library(openxlsx)
+library(stringr)
+library(ggplot2)
+library(readr)
+library(vroom)
+library(plot3D)
+
+# "gp" -- general population
+# "up" -- short for upper bound
+# "lo" -- short for lower bound
+
+# put "prevalence.csv" into Results/
+# 9 files each including overall AllWaves
+
+
+# - Prevalence (Jing)
+# - Confidence interval of probabilities (slide 5) (Jing)
+# - We need to check  the code (O62 for male) (Jing)
+# - 3D plot for weight, prevalence, and probability overall and by groups (Jing)
+# - 2 forest plot probability estimate and 95%CI of each predictor by age groups and separately by sex (Jing)
+
+
+
+###########################################################
+
+# risk score
+score <- list.files(pattern = "Output_disease_risk_score_weights_prob_ulAllWaves")
+# find the min number of predictors 
+num_pred <- vector("integer", length(score))
+for ( j in seq_along(num_pred)){
+  num_pred[j] <- nrow(read.xlsx(score[j]))
+  if (j == length(score)) num_pred <- min(num_pred)
+}
+num_pred
+# compute probability for subgroups with the model from the general pop
+# class0 <- list.files(pattern = "class0_summaryAllWaves")
+eqn <- read_csv("class0_summaryAllWaves.txt")
+beta0 <- str_split(eqn[7,], " " )[[1]]
+b0 <- as.numeric(beta0[!beta0 ==""][2])
+b0_sd <- as.numeric(beta0[!beta0==""][3])
+b0_up <- b0 + 1.96 * b0_sd
+b0_lo <- b0 - 1.96 * b0_sd
+
+beta1 <- str_split(eqn[8,], " ")[[1]]
+b1 <- as.numeric(beta1[!beta1==""][2])
+b1_sd <- as.numeric(beta1[!beta1==""][3])
+b1_up <- b1 + 1.96 * b1_sd
+b1_lo <- b1 - 1.96 * b1_sd
+prob <- function(x){
+  1/(1+exp(-b0-b1*x))
+}
+
+prob_up <- function(x){
+  1/(1+exp(-b0_up-b1_up*x))
+}
+
+prob_lo <- function(x){
+  1/(1+exp(-b0_lo-b1_lo*x))
+}
+
+
+for ( i in seq_along(score)){
+  df <- read.xlsx(score[i])
+  
+  # remove strange predictors and format
+  df <- df[!df$Predictors %like% "var4",]
+  df$Ensamble <- as.numeric(df$Ensamble)
+  df$Weights <- as.integer(df$Weights)
+  
+  # keep the least common number of predictors
+  df <- df[1:num_pred,]
+  
+  # compute the probability via the model from the gp
+  df$eqn_gp <- paste0("1/(1+exp(-(",as.character(b0),"+", 
+                      as.character(b1), "*DRS)))")
+  df$Probability_gp <- prob(df$Ensamble)
+  df$Probability_gp_up <- prob_up(df$Ensamble)
+  df$Probability_gp_lo <- prob_lo(df$Ensamble)
+  
+  setnames(df, "Ensamble", "DRS")
+  
+  if (!score[i] %like% "AllWaves_"){
+    df$age_group <- "all"
+    df$gender <- "both"
+  }else{
+    df$age_group <- str_split(score[i],"_")[[1]][8]
+    df$gender <- substr(str_split(score[i], "_")[[1]][9], 1, 1)
+  }
+  if (i == 1) dt <- df
+  else dt <- rbind(dt, df)
+}
+rm(df)
+
+write.csv2(dt,"for_plotting.csv", row.names = FALSE)
+
+
+
+
+
+###########################################################
+
+# Probability on Predictors all together
+ggplot(dt, aes(x=Predictors, y=Probability, shape = age_group))+
+  # geom_line()+
+  geom_errorbar(aes(ymin=lower, ymax=upper), width = 0.2,lty=1,lwd=1) + 
+  geom_point(aes(shape = age_group, size = age_group)) +
+  ggtitle("Probability on Predictors by Gender")+ 
+  facet_wrap(~gender) +
+  # theme_ipsum() +
+  #geom_hline(yintercept = 0, lwd=0.5, color='black')+
+  xlab('Predictors')+
+  ylab('Probability')+
+  #theme_classic()+
+  theme(axis.title=element_text(size=12, face='bold'),
+        axis.text = element_text(size=10, color='black'),
+        legend.text = element_text(size=10,color='black' ), 
+        legend.title=element_text(size=10, face='bold'),
+        legend.position = "top",
+        legend.spacing.y = unit(.2, "cm"),
+        title = element_text(size=16),
+        text=element_text(size=8),
+        axis.text.x = element_text(angle=90, vjust=0.3)
+  )
+
+# Probabilities on DRS with labels all together
+# prepare the labels
+dt$pred <- ifelse(dt$Predictors %like% "diag",
+                  substr(dt$Predictors, 10, max(nchar(dt$Predictors))), 
+                  substr(dt$Predictors, 5, max(nchar(dt$Predictors))))
+
+ggplot(dt, aes(x=DRS, y=Probability, group=8, label=pred, size=Weights ,color = gender))+
+  # geom_line()+
+  geom_point(aes(shape = age_group))+geom_text(hjust=-0.3, vjust=-0.5) +
+  ggtitle("Probability on DRS comparasion")+ 
+  # facet_wrap(~gender) +
+  # theme_ipsum() +
+  #geom_hline(yintercept = 0, lwd=0.5, color='black')+
+  xlab('DRS')+
+  ylab('Probability')+
+  #theme_classic()+
+  theme(axis.title=element_text(size=12, face='bold'),
+        axis.text = element_text(size=10, color='black'),
+        legend.text = element_text(size=10,color='black' ), 
+        legend.title=element_text(size=10, face='bold'),
+        legend.position = "top",
+        legend.spacing.y = unit(.2, "cm"),
+        title = element_text(size=16),
+        text=element_text(size=8),
+        axis.text.x = element_text(angle=90, vjust=0.3)
+  )
+
+# Probabilities on Predictors by age groups
+ggplot(dt, aes(x=pred, y=Probability, color = gender))+ # , group=4, color = gender, size=DRS
+  # geom_line(aes())+
+   #geom_smooth(method = lm)
+  geom_errorbar(aes(ymin=lower, ymax=upper), width = 0.2,lty=1,lwd=1) + # , col="red",
+  geom_point(shape = 18, size = 5) + # , fill = "black"
+  ggtitle("Predictors vs. Probability by age groups")+ 
+  facet_wrap(~age_group) +
+  # theme_ipsum() +
+  #geom_hline(yintercept = 0, lwd=0.5, color='black')+
+  xlab('Predictors')+
+  ylab('Probability')+
+  #theme_classic()+
+  theme(axis.title=element_text(size=12, face='bold'),
+        axis.text = element_text(size=10, color='black'),
+        legend.text = element_text(size=10,color='black' ), 
+        legend.title=element_text(size=10, face='bold'),
+        legend.position = "top",
+        legend.spacing.y = unit(.2, "cm"),
+        title = element_text(size=16),
+        text=element_text(size=8),
+        axis.text.x = element_text(angle=90, vjust=0.3)
+  )
+
+# 3D plot Probabilities on Weights & prevalence
+# Add prevalence
+prev <- fread("prevalence.csv")
+setnames(prev, "code", "pred")
+dt_prev <- merge(dt, prev, by = "pred")
+
+# x, y and z coordinates
+x <- dt_preg$Weights
+y <- dt_prev$prevalence
+z <- dt_prev$Probability
+
+
+# Confidence interval 3D
+CI <- list(z = as.matrix(cbind(dt_prev$Probability-dt_prev$lower, dt_prev$upper-dt_prev$Probability)))
+head(CI$z)
+
+# 
+scatter3D(x, y, z,
+          xlab = "Weights", ylab ="Prevalence", zlab = "Probability", 
+          phi = 0, bty = "g", col = gg.col(dt_prev$Probability*100), 
+          main = "Probability with CI vs. Weights and Prevalence",
+          pch = 18, CI = CI)
+# add label
+text3D(x, y, z,  labels = dt_prev$pred,  
+       add = TRUE, colkey = FALSE, cex = 0.5, CI = CI)
+
+# alternative CI in 3D with better axis
+library(plotly)
+fig <- plot_ly(dt_prev, x=~prevalence, y=~Weights, z=~Probability,
+               type="scatter3d", mode="markers", color = ~prevalence, 
+               text = ~pred, textposition = 'middle right',
+               textfont = list(color = '#000000', size = 16)) 
+fig <- fig %>% layout(title = 'Probability vs. Prevalence and Weights',
+                      xaxis = list(title = 'Prevalence',
+                                   zeroline = TRUE,
+                                   range = c(0,1)), 
+                      yaxis = list(title = 'Weights'))
+fig
+
