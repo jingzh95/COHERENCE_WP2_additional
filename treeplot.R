@@ -74,7 +74,7 @@ I=1
   # df <- fread("for_the_tree.csv")
   
   # aggregate the informations
-  df$Pred_Ens_Weights <- paste0(df$Predictors, ", " ,round(df$Ensamble,2),", ", df$Weights, 
+  df$Pred_Ens_Weights <- paste0(df$Predictors, ", " ,round(df$Ensamble,2),", ", df$Weights,  ", ",
                                 round(df$Probability,2), ",", round(df$prevalence,2))
   df$pathString <- paste(center, df$Age_group, df$Gender, df$Pred_Ens_Weights, sep="|")
   
