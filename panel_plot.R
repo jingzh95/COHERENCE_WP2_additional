@@ -17,35 +17,35 @@ str(df)
 
 # probability row
 plot1 <- ggplot(df, aes(y = Predictors, x = Probability, col= Gender)) +
-  geom_point(shape = 18, size = 2) + 
+  geom_point(shape = 18, size = 3) + 
   xlim(0.1,max(df$Probability)+sd(df$Probability))+ 
   geom_errorbarh(aes(xmin = lower, xmax = upper), height = 0.25) +  
   scale_color_manual(values = c("#293352", "#FC4E07", "#4E84C4" )) +
   facet_wrap(~Age_group, ncol = 5) +
-  theme(axis.text.y = element_text(size = 6)) +
+  theme(axis.text.y = element_text(size = 11)) +
   theme(legend.position="right")
   
 # prevalence row
-plot2 <- ggplot(df, aes(y = Predictors, x = prevalence, col=df$Gender)) +
-  geom_point(shape = 18, size = 3) + 
+plot2 <- ggplot(df, aes(y = Predictors, x = prevalence, col=Gender)) +
+  geom_point(shape = 18, size = 5) + 
   geom_segment(x = 0, y= df$Predictors, xend = df$prevalence, yend = df$Predictors) +
   xlim(0,max(df$prevalence)+sd(df$prevalence))+ 
   scale_color_manual(values = c("#293352", "#FC4E07", "#4E84C4" )) +
   facet_wrap(~Age_group, ncol = 5) +
-  theme(axis.text.y = element_text(size = 6)) +
+  theme(axis.text.y = element_text(size = 11)) +
   theme(legend.position = "none")
 
 # weights row
-plot3 <- ggplot(df, aes(y = Predictors, x = Weights, col=df$Gender)) +
-  geom_point(shape = 18, size = df$Weights) + 
+plot3 <- ggplot(df, aes(y = Predictors, x = Weights, col=Gender)) +
+  geom_point(shape = 18, size = df$Weights*2) + 
   xlim(0,max(df$Weights)+sd(df$Weights))+ 
   scale_color_manual(values = c("#293352", "#FC4E07", "#4E84C4" )) +
   facet_wrap(~Age_group, ncol = 5) +
-  theme(axis.text.y = element_text(size = 6)) +
-  theme(legend.position = "none") 
+  theme(axis.text.y = element_text(size = 11)) +
+  theme(legend.position = "none")  
   
 pp <- ggarrange(plot1,plot2, plot3, ncol=1, nrow=3, common.legend = TRUE)
 
-bmp("panel_plot.bmp", width = 640, height = 960, units = "px")
+bmp("panel_plot.bmp", width = 1280, height = 1920, units = "px")
 print(pp)
 dev.off()
