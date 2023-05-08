@@ -17,11 +17,11 @@ load ("/tsd/p1380/data/durable/Nordic_CDM/Framework_NCDM/Analysis/Permanent_data
 pred <- names(tempal)
 pred <- pred[pred %like% "_"]
 diag_code <- pred[pred %like% "diag"]
-diag_code <- substr(diag_code, 10, 12)
+diag_code <- substr(diag_code, 10, max(nchar(diag_code))) # update for SV
 diag_code <- unique(diag_code)
 diag_code <- diag_code[!diag_code==""]
 atc <- pred[!pred %like% "diag"]
-atc <- substr(atc, 5, 11)
+atc <- substr(atc, 5, max(nchar(atc)))                    # update for SV
 atc <- unique(atc)
 atc <- atc[!atc==""]
 
