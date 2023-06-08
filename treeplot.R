@@ -1,4 +1,5 @@
 
+
 country <- "NO"
 
 
@@ -17,7 +18,7 @@ country <- "NO"
   # library(plotly, lib.loc = TSD_install_path)
   # library(reticulate, lib.loc = TSD_install_path)
 
-  setwd("C:/Users/jinzh/OneDrive - Universitetet i Oslo/Documents/WP2-ML/risk_score/Additional Work/new_code/Results")
+  setwd("C:/Users/jinzh/OneDrive - Universitetet i Oslo/Documents/WP2-ML/risk_score/Additional Work/new_code/Results_SV")
   library(data.table)
   library(openxlsx)
   library(stringr)
@@ -41,10 +42,10 @@ par <- c("AllWaves",
          "DeathWave1",
          "DeathWave2",
          "DeathWave3")
-I=1
-# for (I in seq_along(par)){ 
+
+for (I in seq_along(par)){
   files <- list.files(pattern = paste0("Output_disease_risk_score_weights_prob_ul", par[I]))
-  center <- par[I]
+  # center <- par[I]
   for (i in seq_along(files)){
     df1 <- read.xlsx(files[i])
     df1$Age_group <- ifelse(is.na(str_split(files[i], "_")[[1]][8]), "All",
@@ -69,59 +70,40 @@ I=1
   df <- data.table(merge(df, prev, by = "code", all.x = TRUE))
   df <- df[!df$code==""]
   
-  write.csv2(df,"for_the_tree.csv", row.names = FALSE)
+  write.csv2(df,paste0("for_the_tree_", par[I], ".csv"), row.names = FALSE)
   
-  # df <- fread("for_the_tree.csv")
-  
-  # aggregate the informations
-  df$Pred_Ens_Weights <- paste0(df$Predictors, ", " ,round(df$Ensamble,2),", ", df$Weights,  ", ",
-                                round(df$Probability,2), ",", round(df$prevalence,2))
-  df$pathString <- paste(center, df$Age_group, df$Gender, df$Pred_Ens_Weights, sep="|")
-  
-  #convert to Node
-  patstree <- as.Node(df, pathDelimiter = "|")
-  
-  #plot with networkD3
-  patstreeList <- ToListExplicit(patstree, unname = TRUE)
-  
-  fig <- radialNetwork(patstreeList,
-                       fontSize = 12,
-                       fontFamily = "calibri")
-  fig
-  
-  # add legend
-  ## Country
-  ## Predictors, DRS, Weight, Probability, Prevalence
-  
-  htmlwidgets::saveWidget(
-    widget = fig, #the figure
-    file = paste0("tree_", center,"_", "NO",".html"), #the path & file name
-    selfcontained = TRUE #creates a single html file
-  )
-# }
+  # # df <- fread("for_the_tree.csv")
+  # 
+  # # aggregate the informations
+  # df$Pred_Ens_Weights <- paste0(df$Predictors, ", " ,round(df$Ensamble,2),", ", df$Weights, ", ",
+  #                               round(df$Probability,2), ",", round(df$prevalence,2))
+  # df$pathString <- paste(center, df$Age_group, df$Gender, df$Pred_Ens_Weights, sep="|")
+  # 
+  # #convert to Node
+  # patstree <- as.Node(df, pathDelimiter = "|")
+  # 
+  # #plot with networkD3
+  # patstreeList <- ToListExplicit(patstree, unname = TRUE)
+  # 
+  # fig <- radialNetwork(patstreeList,
+  #                      fontSize = 12,
+  #                      fontFamily = "calibri")
+  # fig
+  # 
+  # # add legend
+  # ## Country
+  # ## Predictors, DRS, Weight, Probability, Prevalence
+  # 
+  # htmlwidgets::saveWidget(
+  #   widget = fig, #the figure
+  #   file = paste0("tree_", center,"_", "NO",".html"), #the path & file name
+  #   selfcontained = TRUE #creates a single html file
+  # )
+}
   
   df$Age_group <- as.factor(df$Age_group)
   df$Gender <- as.factor(df$Gender)
 
-# panel plot try 1
-  # use facet_grid for aligning the predictors
-  # hard to read and so on
-
-  # 
-  # p0 <- 
-  #   df |>
-  #   ggplot(aes(y = fct_rev(Predictors))) + 
-  #   theme_classic()
-  # p0 <- p0 +
-  #   geom_point(aes(x=Probability), shape=15, size=3) +
-  #   geom_linerange(aes(xmin=lower, xmax=upper)) +
-  #   facet_grid(vars(Age_group), vars(Gender)) +
-  #   ylab('Predictors') 
-  # p0 
-  
-# panel plots try 2
- # put subplot together
- # don't know who to align the predictors
   
   p11 <- 
     df[df$Age_group==levels(df$Age_group)[2]] |>
