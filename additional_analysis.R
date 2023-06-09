@@ -417,7 +417,7 @@ if (nrow(temp17)>=500){
   tempall3 <- temp37
 
   N0<- table(tempall3$var4)
-  temp37<- ovun.sample(var4 ~ . ,data=tempall3, method="under", N=N0[2]*2)$data
+  temp37<- ovun.sample(var4 ~ . ,data=tempall3, method="both", N=N0[2]*2)$data 
 
   # temp37$var4 <- ifelse(temp37$var4==0,"no","yes")
   var5 <- trainControl(method = "cv", number = 5,
