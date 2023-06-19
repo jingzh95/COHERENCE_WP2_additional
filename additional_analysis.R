@@ -139,7 +139,7 @@ if (wave_name %like% "Death"){
 }
 
 temp17<-temp17[temp17$var108>=var2 & temp17$var108<=var3,]
-
+if ( i >= 5 ) temp17 <- temp17[temp17$var100 %in% unique(pop$var100),]
 #check if it's ok to continue
 if (nrow(temp17)>=500){
 
